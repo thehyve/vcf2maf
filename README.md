@@ -25,7 +25,9 @@ perl convert_cache.pl --species homo_sapiens --version 86_GRCh37 --dir $VEP_DATA
 ```
 
 
-## example 
+## example
+
+```
 docker run --rm \
 -v $PWD/tests:/tests \
 -v $PWD/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz:/root/.vep/homo_sapiens/84_GRCh37/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz \
@@ -33,7 +35,7 @@ sevenbridges/vcf2maf \
 perl /opt/vcf2maf/vcf2maf.pl --input-vcf /tests/test.vcf --output-maf /tests/test.vep.maf \
 --vep-path /opt/variant_effect_predictor_85/ensembl-tools-release-85/scripts/variant_effect_predictor/ \
 --vep-data /opt/variant_effect_predictor_85/ensembl-tools-release-85/scripts/variant_effect_predictor/cache 
-
+```
 
 
 
