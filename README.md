@@ -5,27 +5,29 @@ To convert a [VCF](http://samtools.github.io/hts-specs/) into a [MAF](https://wi
 
 ## Quick start (using docker)
 
-## prepare
+### prepare
 ```
 docker pull thehyve/vcf2maf
 wget ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
 ```
-## build cache
+### build cache
+
+Download cache: 
 ```
 wget ftp://ftp.ensembl.org/pub/release-86/variation/VEP/homo_sapiens_vep_86_GRCh37.tar.gz
-docker run --rm 
+tar -xvf homo_sapiens_refseq_vep_86_GRCh37.tar.gz
+```
+Run conversion:
+```
+docker run --rm \
+-v $PWD/homo_sapiens_refseq/:/vep_data/homo_sapiens \
+thehyve/vcf2maf \
+perl /opt/variant_effect_predictor_85/ensembl-tools-release-85/scripts/variant_effect_predictor/convert_cache.pl \
+--species homo_sapiens --version 86_GRCh37 --dir /vep_data/
 ```
 
-```
-.....
- perl INSTALL.pl --AUTO af --SPECIES homo_sapiens --ASSEMBLY GRCh37 --DESTDIR $VEP_PATH --CACHEDIR $VEP_DATA
-docker run --rm 
-...
-perl convert_cache.pl --species homo_sapiens --version 86_GRCh37 --dir $VEP_DATA
-```
 
-
-## example
+### example
 
 ```
 docker run --rm \
