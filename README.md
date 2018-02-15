@@ -27,7 +27,7 @@ perl /opt/variant_effect_predictor_85/ensembl-tools-release-85/scripts/variant_e
 ```
 
 
-### example
+### example version 86
 
 ```
 docker run --rm \
@@ -39,9 +39,19 @@ perl /opt/vcf2maf/vcf2maf.pl --input-vcf /tests/test.vcf --output-maf /tests/tes
 --vep-data /opt/variant_effect_predictor_85/ensembl-tools-release-85/scripts/variant_effect_predictor/cache 
 ```
 
-
-
-
+### example version 89
+release 89 needs --filter-vcf command, --custom-enst was added because this is necessary for cBioPortal.
+```
+docker run --rm \
+-v ~/.vep/:/ref
+-v~/vcf2maf/tests:/test \
+vcf2maf-thehyve \
+perl /opt/vcf2maf/vcf2maf.pl --input-vcf /test/test.vcf --output-maf /test/test.vep.maf \
+--vep-path /opt/variant_effect_predictor_89/ensembl-tools-release-89/scripts/variant_effect_predictor/ \
+--ref-fasta /ref/homo_sapiens/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
+--filter-vcf /ref/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
+--custom-enst /opt/vcf2maf/data/isoform_overrides_uniprot
+```
 
 Quick start (manual installation)
 -----------
