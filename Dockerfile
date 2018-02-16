@@ -61,7 +61,10 @@ WORKDIR /opt/variant_effect_predictor_89/cache/Plugins
 RUN wget https://raw.githubusercontent.com/konradjk/loftee/v0.3-beta/splice_module.pl
 
 WORKDIR /opt
-ADD . /opt/vcf2maf 
+RUN git clone --branch docker_improvements https://github.com/thehyve/vcf2maf vcf2maf
 
-MAINTAINER Michele Mattioni, Seven Bridges, <michele.mattioni@sbgenomics.com>
-MAINTAINER Dionne Zaal, The Hyve <dionne@thehyve.nl>
+LABEL maintainers=" \
+ Michele Mattioni (Seven Bridges) <michele.mattioni@sbgenomics.com>, \
+ Dionne Zaal (The Hyve) <dionne@thehyve.nl>, \
+ Sander Tan (The Hyve) <sandertan@thehyve.nl> \
+ "
