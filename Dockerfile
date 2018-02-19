@@ -61,7 +61,7 @@ WORKDIR /opt/variant_effect_predictor_89/cache/Plugins
 RUN wget https://raw.githubusercontent.com/konradjk/loftee/v0.3-beta/splice_module.pl
 
 WORKDIR /opt
-RUN git clone --branch docker_improvements https://github.com/thehyve/vcf2maf vcf2maf
+COPY . /opt/vcf2maf
 
 LABEL maintainers=" \
  Michele Mattioni (Seven Bridges) <michele.mattioni@sbgenomics.com>, \
