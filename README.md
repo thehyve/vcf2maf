@@ -15,7 +15,6 @@ This documentation is specific for:
 - Ensembl release 89
 - Ensembl VEP 89 as part of `ensembl-tools`
 - GRCh37 / hg19
-- `vcf2maf` v1.6.15
 
 Since release Ensembl release 90, VEP has moved from `ensembl-tools` to `ensembl-vep` and has significantly changed functionality. All [`ensembl-vep`](https://github.com/Ensembl/ensembl-vep) versions (even 88 and 89 from [DockerHub](https://hub.docker.com/r/ensemblorg/ensembl-vep/)) are not compatible with `vcf2maf`. This Docker approach uses the latest release from [`ensembl-tools`](https://github.com/Ensembl/ensembl-tools/tree/release/89/scripts/variant_effect_predictor).
 
@@ -32,14 +31,11 @@ First create a directory for the VEP cache folder.
 mkdir /<local_path>/vep_cache
 ```
 
-Add to this path as environment variable to `~/.bash_profile` or `~/.bashrc`.
+Add this path as environment variable to `~/.bash_profile` or `~/.bashrc`.
 ```bash
 export VEP_CACHE=/<local_path>/vep_cache/
 ```
-Load this new variable with `source ~/.bash_profile` or `source ~/.bashrc`. To start and browse the Docker container, use the following run command:
-```bash
-docker run --name vcf2maf -it -v $VEP_CACHE/vep_cache/:/vep_cache/ -w /opt/ --rm vcf2maf bash
-```
+Load this variable with `source ~/.bash_profile` or `source ~/.bashrc`.
 
 ### Download Ensembl release and reference genome
 ```bash
@@ -50,7 +46,6 @@ wget ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/Homo_sapiens.GR
 tar -xzf homo_sapiens_vep_89_GRCh37.tar.gz
 gzip -d Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
 ```
-
 
 ### Download and prepare ExAC VCF
 Download and modify the ExAC r0.3.1 VCF with germline variants called across thousands of normal samples excluding TCGA as described in as in https://gist.github.com/ckandoth/f265ea7c59a880e28b1e533a6e935697.
@@ -132,6 +127,12 @@ docker run --rm -it --name vcf2maf \
 
 ### Run vcf2maf
 To run `vcf2maf` with a local VCF file, use the [test example](#test-vcf2maf) and mount a directory for input and output using the `-v` command in `docker run`. For example: `-v /local_input_output/:/input_output/`. In the `vcf2maf.pl` command, direct to the input and output files, for example: `--input-vcf /input_output/input.vcf` and `--output-maf /input_output/output.maf`.
+
+### Start and browse the Docker container
+To start and browse the Docker container, use the following run command:
+```bash
+docker run --name vcf2maf -it -v $VEP_CACHE/vep_cache/:/vep_cache/ -w /opt/ --rm vcf2maf bash
+```
 
 # Quick start (manual installation)
 

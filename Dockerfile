@@ -41,14 +41,10 @@ RUN cpanm CPAN::Meta \
 	Module::Build
 
 WORKDIR /opt
-RUN wget https://github.com/samtools/samtools/releases/download/1.3/samtools-1.3.tar.bz2
-RUN tar jxf samtools-1.3.tar.bz2
-WORKDIR /opt/samtools-1.3
-RUN make
-RUN make install
-
-WORKDIR /opt
-RUN rm samtools-1.3.tar.bz2
+RUN curl -LOOO https://github.com/samtools/{samtools/releases/download/1.3.1/samtools-1.3.1,bcftools/releases/download/1.3.1/bcftools-1.3.1}.tar.bz2
+RUN cat *tar.bz2 | tar -ijxf -
+RUN cd samtools-1.3.1 && make && make prefix=/opt/samtools install && ln -s /opt/bcftools-1.3.1/bcftools /usr/bin/bcftools && cd ..
+RUN cd bcftools-1.3.1 && make && make prefix=/opt/samtools install && ln -s /opt/samtools-1.3.1/samtools /usr/bin/samtools && cd ..
 
 RUN wget https://github.com/Ensembl/ensembl-tools/archive/release/89.zip
 RUN mkdir variant_effect_predictor_89
