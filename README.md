@@ -1,10 +1,10 @@
-vcf<img src="http://i.giphy.com/R6X7GehJWQYms.gif" width="30">maf
-=======
+# vcf2maf
 
 To convert a [VCF](http://samtools.github.io/hts-specs/) into a [MAF](https://wiki.nci.nih.gov/x/eJaPAQ), each variant must be mapped to only one of all possible gene transcripts/isoforms that it might affect. But even within a single isoform, a `Missense_Mutation` close enough to a `Splice_Site`, can be labeled as either in MAF format, but not as both. **This selection of a single effect per variant, is often subjective. And that's what this project attempts to standardize.** The `vcf2maf` and `maf2maf` scripts leave most of that responsibility to [Ensembl's VEP](http://useast.ensembl.org/info/docs/tools/vep/index.html), but allows you to override their "canonical" isoforms, or use a custom ExAC VCF for annotation. Though the most useful feature is the **extensive support in parsing a wide range of crappy MAF-like or VCF-like formats** we've seen out in the wild.
 
 # Table of Contents
 - [Quick start (using Docker)](#quick-start-using-docker)
+  - [Create local VEP cache directory](#create-local-vep-cache-directory)
 - [Quick start (manual installation)](#quick-start-manual-installation)
 - [maf2maf](#maf2maf)
 - [License](#license)
@@ -18,121 +18,45 @@ This documentation is specific for:
 
 Since release Ensembl release 90, VEP has moved from `ensembl-tools` to `ensembl-vep` and has significantly changed functionality. All [`ensembl-vep`](https://github.com/Ensembl/ensembl-vep) versions (even 88 and 89 from [DockerHub](https://hub.docker.com/r/ensemblorg/ensembl-vep/)) are not compatible with `vcf2maf`. This Docker approach uses the latest release from [`ensembl-tools`](https://github.com/Ensembl/ensembl-tools/tree/release/89/scripts/variant_effect_predictor).
 
-### Create Docker image
+## Create Docker image
+
+### Option 1: Docker Hub
+The easiest way to obtain the Docker image is to pull it from Docker Hub:
 ```bash
-git clone --branch docker_improvements https://github.com/thehyve/vcf2maf
+docker pull thehyve/vcf2maf
+```
+
+### Option 2: Build it from Git repository
+If you would like to build your own Docker image, you could clone the Git repository and build it with Docker:
+```bash
+git clone --branch master https://github.com/thehyve/vcf2maf
 cd vcf2maf
 docker build -t vcf2maf .
 ```
+When buiding from a local Git repository, substitute the `thehyve/vcf2maf` image name by `vcf2maf` in the subsequent commands, as well as in `vep_cache_preparation.sh`.
 
-### Create local cache directory
+## Create local VEP cache directory
 First create a directory for the VEP cache folder.
 ```bash
-mkdir /<local_path>/vep_cache
+mkdir /<local_path>/<vep_cache_folder>
 ```
 
 Add this path as environment variable to `~/.bash_profile` or `~/.bashrc`.
 ```bash
-export VEP_CACHE=/<local_path>/vep_cache/
+export VEP_CACHE=/<local_path>/<vep_cache_folder>/
 ```
 Load this variable with `source ~/.bash_profile` or `source ~/.bashrc`.
 
-### Download Ensembl release and reference genome
+Creating the cache directory includes downloading the Ensembl release, reference genome and ExAC VCF. **This will take several hours.**
 ```bash
-cd $VEP_CACHE
-wget ftp://ftp.ensembl.org/pub/release-89/variation/VEP/homo_sapiens_vep_89_GRCh37.tar.gz
-wget ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
-
-tar -xzf homo_sapiens_vep_89_GRCh37.tar.gz
-gzip -d Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
+/bin/bash vep_cache_preparation.sh
 ```
 
-### Download and prepare ExAC VCF
-Download and modify the ExAC r0.3.1 VCF with germline variants called across thousands of normal samples excluding TCGA as described in as in https://gist.github.com/ckandoth/f265ea7c59a880e28b1e533a6e935697.
+## Test VEP, vcf2maf and maf2maf
+Tests can be found in the [Tests markdown file](docs/vcf2maf_tests.md).
 
-```bash
-# Download the ExAC VCF
-cd $VEP_CACHE
-wget ftp://ftp.broadinstitute.org:/pub/ExAC_release/release0.3.1/subsets/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
-
-# Start Docker container
-docker run --name vcf2maf -it -v $VEP_CACHE:/vep_cache/ -w /vep_cache/ --rm vcf2maf bash
-
-# In the Docker container modify the ExAC VCF
-echo "##FILTER=<ID=AC_Adj0_Filter,Description=\"Only low quality genotype calls containing alternate alleles are present\">" > header_line.tmp
-curl -LO https://raw.githubusercontent.com/mskcc/vcf2maf/v1.6.14/data/known_somatic_sites.bed
-bcftools annotate --header-lines header_line.tmp --remove FMT,^INF/AF,INF/AC,INF/AN,INF/AC_Adj,INF/AN_Adj,INF/AC_AFR,INF/AC_AMR,INF/AC_EAS,INF/AC_FIN,INF/AC_NFE,INF/AC_OTH,INF/AC_SAS,INF/AN_AFR,INF/AN_AMR,INF/AN_EAS,INF/AN_FIN,INF/AN_NFE,INF/AN_OTH,INF/AN_SAS /vep_cache/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz | bcftools filter --targets-file ^known_somatic_sites.bed --output-type z --output ExAC_nonTCGA.r0.3.1.sites.fixed.vcf.gz
-
-# Rename VCF and remove temporary files
-mv -f /vep_cache/ExAC_nonTCGA.r0.3.1.sites.fixed.vcf.gz /vep_cache/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
-rm header_line.tmp
-rm known_somatic_sites.bed
-
-# Index with tabix
-tabix -p vcf /vep_cache/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
-```
-
-### Prepare Ensembl release with tabix
-Convert the offline cache for use with tabix, which significantly speeds up the lookup of known variants as described in https://gist.github.com/ckandoth/f265ea7c59a880e28b1e533a6e935697.
-```bash
-docker run --rm -it --name vcf2maf \
-  -v $VEP_CACHE:/vep_cache/ \
-  -w /opt/variant_effect_predictor_89/ensembl-tools-release-89/scripts/variant_effect_predictor  \
-  vcf2maf \
-  perl convert_cache.pl \
-    --species homo_sapiens \
-    --version 89_GRCh37 \
-    --dir /vep_cache/
-```
-
-### Test VEP
-```bash
-# Adding --cache_version 89 is required, else VEP searches for 88
-docker run --rm -it --name vcf2maf \
-  -v $VEP_CACHE:/vep_cache/ \
-  -w /opt/variant_effect_predictor_89/ensembl-tools-release-89/scripts/variant_effect_predictor  \
-  vcf2maf \
-  perl variant_effect_predictor.pl --species homo_sapiens --assembly GRCh37 --offline \
-    --no_progress --no_stats --sift b --ccds --uniprot --hgvs --symbol --numbers \
-    --domains --gene_phenotype --canonical --protein --biotype --tsl --pubmed \
-    --variant_class --shift_hgvs 1 --check_existing --total_length --allele_number \
-    --no_escape --xref_refseq --failed 1 --vcf --minimal --flag_pick_allele \
-    --polyphen b --gmaf --maf_1kg --maf_es --regulatory \
-    --pick_order canonical,tsl,biotype,rank,ccds,length \
-    --dir /vep_cache/ \
-    --fasta /vep_cache/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa \
-    --input_file example_GRCh37.vcf \
-    --output_file TEST_output_example_GRCh37.vep.vcf \
-    --custom /vep_cache/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz,ExAC,vcf,exact,1,AC,AN \
-    --cache_version 89
-```
-
-### Test vcf2maf
-``` bash
-# Adding --cache_version 89 is required, else VEP searches for 88
-docker run --rm -it --name vcf2maf \
-  -v $VEP_CACHE:/vep_cache/ \
-  -w /opt/vcf2maf  \
-  vcf2maf \
-  perl vcf2maf.pl \
-    --input-vcf tests/test.vcf \
-    --output-maf tests/TEST_OUTPUT.vep.maf \
-    --vep-path /opt/variant_effect_predictor_89/ensembl-tools-release-89/scripts/variant_effect_predictor \
-    --vep-data /vep_cache/ \
-    --ref-fasta /vep_cache/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa \
-    --filter-vcf /vep_cache/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz \
-    --custom-enst data/isoform_overrides_uniprot \
-    --cache-version 89
-```
-
-### Run vcf2maf
-To run `vcf2maf` with a local VCF file, use the [test example](#test-vcf2maf) and mount a directory for input and output using the `-v` command in `docker run`. For example: `-v /local_input_output/:/input_output/`. In the `vcf2maf.pl` command, direct to the input and output files, for example: `--input-vcf /input_output/input.vcf` and `--output-maf /input_output/output.maf`.
-
-### Start and browse the Docker container
-To start and browse the Docker container, use the following run command:
-```bash
-docker run --name vcf2maf -it -v $VEP_CACHE/vep_cache/:/vep_cache/ -w /opt/ --rm vcf2maf bash
-```
+## Run vcf2maf
+To run `vcf2maf` with a local VCF file, use the [test example](docs/vcf2maf_tests.md#test-vcf2maf) and mount a directory for input and output using the `-v` command in `docker run`. For example: `-v /local_input_output/:/input_output/`. In the `vcf2maf.pl` command, direct to the input and output files, for example: `--input-vcf /input_output/input.vcf` and `--output-maf /input_output/output.maf`.
 
 # Quick start (manual installation)
 
