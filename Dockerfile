@@ -41,27 +41,26 @@ RUN cpanm CPAN::Meta \
 	Module::Build
 
 WORKDIR /opt
-RUN wget https://github.com/samtools/samtools/releases/download/1.3/samtools-1.3.tar.bz2
-RUN tar jxf samtools-1.3.tar.bz2
-WORKDIR /opt/samtools-1.3
-RUN make
-RUN make install
+RUN curl -LOOO https://github.com/samtools/{samtools/releases/download/1.3.1/samtools-1.3.1,bcftools/releases/download/1.3.1/bcftools-1.3.1}.tar.bz2
+RUN cat *tar.bz2 | tar -ijxf -
+RUN cd samtools-1.3.1 && make && make prefix=/opt/samtools install && ln -s /opt/samtools-1.3.1/samtools /usr/bin/samtools && cd ..
+RUN cd bcftools-1.3.1 && make && make prefix=/opt/samtools install && ln -s /opt/bcftools-1.3.1/bcftools /usr/bin/bcftools && cd ..
 
-WORKDIR /opt
-RUN rm samtools-1.3.tar.bz2
-
-RUN wget https://github.com/Ensembl/ensembl-tools/archive/release/85.zip
-RUN mkdir variant_effect_predictor_85
-RUN mkdir variant_effect_predictor_85/cache
-RUN unzip 85.zip -d variant_effect_predictor_85
-RUN rm 85.zip 
-WORKDIR /opt/variant_effect_predictor_85/ensembl-tools-release-85/scripts/variant_effect_predictor/
-RUN perl INSTALL.pl --AUTO ap --PLUGINS LoF --CACHEDIR /opt/variant_effect_predictor_85/cache
-WORKDIR /opt/variant_effect_predictor_85/cache/Plugins
+RUN wget https://github.com/Ensembl/ensembl-tools/archive/release/89.zip
+RUN mkdir variant_effect_predictor_89
+RUN mkdir variant_effect_predictor_89/cache
+RUN unzip 89.zip -d variant_effect_predictor_89
+RUN rm 89.zip
+WORKDIR /opt/variant_effect_predictor_89/ensembl-tools-release-89/scripts/variant_effect_predictor/
+RUN perl INSTALL.pl --AUTO ap --PLUGINS LoF --CACHEDIR /opt/variant_effect_predictor_89/cache
+WORKDIR /opt/variant_effect_predictor_89/cache/Plugins
 RUN wget https://raw.githubusercontent.com/konradjk/loftee/v0.3-beta/splice_module.pl
 
 WORKDIR /opt
-ADD . /opt/vcf2maf 
+COPY . /opt/vcf2maf
 
-COPY Dockerfile /opt/
-MAINTAINER Michele Mattioni, Seven Bridges, <michele.mattioni@sbgenomics.com>
+LABEL maintainers=" \
+ Michele Mattioni (Seven Bridges) <michele.mattioni@sbgenomics.com>, \
+ Dionne Zaal (The Hyve) <dionne@thehyve.nl>, \
+ Sander Tan (The Hyve) <sandertan@thehyve.nl> \
+ "
