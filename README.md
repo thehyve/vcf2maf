@@ -33,7 +33,7 @@ git clone --branch master https://github.com/thehyve/vcf2maf
 cd vcf2maf
 docker build -t vcf2maf .
 ```
-When buiding from a local Git repository, substitute the `thehyve/vcf2maf` image name by `vcf2maf` in the subsequent commands, as well as in `vep_cache_preparation.sh`.
+When buiding from a local Git repository, substitute the `thehyve/vcf2maf` image name by `vcf2maf` in the subsequent commands, as well as in `docker_vep_cache.sh`.
 
 ## Create local VEP cache directory
 First create a directory for the VEP cache folder.
@@ -49,14 +49,14 @@ Load this variable with `source ~/.bash_profile` or `source ~/.bashrc`.
 
 Creating the cache directory includes downloading the Ensembl release, reference genome and ExAC VCF. **This will take several hours.**
 ```bash
-/bin/bash vep_cache_preparation.sh
+/bin/bash docker_vep_cache.sh
 ```
 
 ## Test VEP, vcf2maf and maf2maf
-Tests can be found in the [Tests markdown file](docs/vcf2maf_tests.md).
+Tests can be found in the [Tests markdown file](docs/docker_tests.md).
 
 ## Run vcf2maf
-To run `vcf2maf` with a local VCF file, use the [test example](docs/vcf2maf_tests.md#test-vcf2maf) and mount a directory for input and output using the `-v` command in `docker run`. For example: `-v /local_input_output/:/input_output/`. In the `vcf2maf.pl` command, direct to the input and output files, for example: `--input-vcf /input_output/input.vcf` and `--output-maf /input_output/output.maf`.
+To run `vcf2maf` with a local VCF file, use the [test example](docs/docker_tests.md#test-vcf2maf) and mount a directory for input and output using the `-v` command in `docker run`. For example: `-v /local_input_output/:/input_output/`. In the `vcf2maf.pl` command, direct to the input and output files, for example: `--input-vcf /input_output/input.vcf` and `--output-maf /input_output/output.maf`.
 
 # Quick start (manual installation)
 
