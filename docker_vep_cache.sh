@@ -16,15 +16,15 @@ else
     cd $VEP_CACHE
 
     # Download the Ensembl release and reference genome
-    wget ftp://ftp.ensembl.org/pub/release-89/variation/VEP/homo_sapiens_vep_89_GRCh37.tar.gz
-    wget ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
+    wget -N ftp://ftp.ensembl.org/pub/release-89/variation/VEP/homo_sapiens_vep_89_GRCh37.tar.gz
+    wget -N ftp://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
 
     # Untar and unzip the Ensembl release and reference genome
     tar -xzf homo_sapiens_vep_89_GRCh37.tar.gz
     gzip -d Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz
 
     # Download the ExAC VCF
-    wget ftp://ftp.broadinstitute.org:/pub/ExAC_release/release0.3.1/subsets/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
+    wget -N ftp://ftp.broadinstitute.org:/pub/ExAC_release/release0.3.1/subsets/ExAC_nonTCGA.r0.3.1.sites.vep.vcf.gz
 
     # In a Docker container:
     # - Modify the ExAC VCF
@@ -58,5 +58,12 @@ else
         --species homo_sapiens \
         --version 89_GRCh37 \
         --dir /vep_cache/
+
+    # In a Docker container, move the Plugins directory to $VEP_CACHE/Plugins
+    docker run --rm -it --name vcf2maf \
+      -v $VEP_CACHE:/vep_cache/ \
+      -w /opt/variant_effect_predictor_89/tmp_plugins-cache \
+      thehyve/vcf2maf \
+      /bin/bash -c 'mv Plugins/ /vep_cache/'
   fi
 fi
