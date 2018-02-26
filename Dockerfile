@@ -43,17 +43,22 @@ RUN cpanm CPAN::Meta \
 WORKDIR /opt
 RUN curl -LOOO https://github.com/samtools/{samtools/releases/download/1.3.1/samtools-1.3.1,bcftools/releases/download/1.3.1/bcftools-1.3.1}.tar.bz2
 RUN cat *tar.bz2 | tar -ijxf -
-RUN cd samtools-1.3.1 && make && make prefix=/opt/samtools install && ln -s /opt/samtools-1.3.1/samtools /usr/bin/samtools && cd ..
-RUN cd bcftools-1.3.1 && make && make prefix=/opt/samtools install && ln -s /opt/bcftools-1.3.1/bcftools /usr/bin/bcftools && cd ..
+RUN cd samtools-1.3.1 && make && make install && ln -s /opt/samtools-1.3.1/samtools /usr/bin/samtools && cd ..
+RUN cd bcftools-1.3.1 && make && make install && ln -s /opt/bcftools-1.3.1/bcftools /usr/bin/bcftools && cd ..
+RUN rm *.tar.bz2
 
 RUN wget https://github.com/Ensembl/ensembl-tools/archive/release/89.zip
 RUN mkdir variant_effect_predictor_89
-RUN mkdir variant_effect_predictor_89/cache
 RUN unzip 89.zip -d variant_effect_predictor_89
 RUN rm 89.zip
 WORKDIR /opt/variant_effect_predictor_89/ensembl-tools-release-89/scripts/variant_effect_predictor/
-RUN perl INSTALL.pl --AUTO ap --PLUGINS LoF --CACHEDIR /opt/variant_effect_predictor_89/cache
-WORKDIR /opt/variant_effect_predictor_89/cache/Plugins
+RUN perl INSTALL.pl --AUTO ap --PLUGINS LoF --CACHEDIR /opt/variant_effect_predictor_89/tmp_plugins-cache
+
+# During installation of VEP, we don't install the full cache, only the plugins.
+# When preparing the VEP cache in a separate step (docker_vep_cache.sh) the 
+# Plugins folder is moved to the local VEP cache directorty.
+
+WORKDIR /opt/variant_effect_predictor_89/tmp_plugins-cache/Plugins
 RUN wget https://raw.githubusercontent.com/konradjk/loftee/v0.3-beta/splice_module.pl
 
 WORKDIR /opt
