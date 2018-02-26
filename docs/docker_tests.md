@@ -50,7 +50,7 @@ Executing the following Docker command will test maf2maf.
 docker run --rm -it --name vcf2maf \
   -v $VEP_CACHE:/vep_cache/ \
   -w /opt/vcf2maf \
-  thehyve/vcf2maf:docker_improvements \
+  thehyve/vcf2maf \
   perl maf2maf.pl \
     --input-maf tests/test.maf \
     --output-maf tests/test_maf2maf.maf \
