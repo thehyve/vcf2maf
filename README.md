@@ -3,8 +3,65 @@ vcf<img src="http://i.giphy.com/R6X7GehJWQYms.gif" width="30">maf
 
 To convert a [VCF](http://samtools.github.io/hts-specs/) into a [MAF](https://wiki.nci.nih.gov/x/eJaPAQ), each variant must be mapped to only one of all possible gene transcripts/isoforms that it might affect. But even within a single isoform, a `Missense_Mutation` close enough to a `Splice_Site`, can be labeled as either in MAF format, but not as both. **This selection of a single effect per variant, is often subjective. And that's what this project attempts to standardize.** The `vcf2maf` and `maf2maf` scripts leave most of that responsibility to [Ensembl's VEP](http://useast.ensembl.org/info/docs/tools/vep/index.html), but allows you to override their "canonical" isoforms, or use a custom ExAC VCF for annotation. Though the most useful feature is the **extensive support in parsing a wide range of crappy MAF-like or VCF-like formats** we've seen out in the wild.
 
-Quick start
------------
+# Table of Contents
+- [Quick start (using Docker)](#quick-start-using-docker)
+  - [Create local VEP cache directory](#create-local-vep-cache-directory)
+- [Quick start (manual installation)](#quick-start-manual-installation)
+- [maf2maf](#maf2maf)
+- [License](#license)
+
+# Quick start (using Docker)
+
+This documentation is specific for:
+- Ensembl release 89
+- Ensembl VEP 89 as part of `ensembl-tools`
+- GRCh37 / hg19
+
+Since release Ensembl release 90, VEP has moved from `ensembl-tools` to `ensembl-vep` and has significantly changed functionality. All [`ensembl-vep`](https://github.com/Ensembl/ensembl-vep) versions (even 88 and 89 from [DockerHub](https://hub.docker.com/r/ensemblorg/ensembl-vep/)) are not compatible with `vcf2maf`. This Docker approach uses the latest release from [`ensembl-tools`](https://github.com/Ensembl/ensembl-tools/tree/release/89/scripts/variant_effect_predictor).
+
+## Create Docker image
+
+### Option 1: Docker Hub
+The easiest way to obtain the Docker image is to pull it from Docker Hub:
+```bash
+docker pull thehyve/vcf2maf
+```
+
+### Option 2: Build it from Git repository
+If you would like to build your own Docker image, you could clone the Git repository and build it with Docker:
+```bash
+git clone --branch master https://github.com/mskcc/vcf2maf/
+cd vcf2maf
+docker build -t vcf2maf .
+```
+When building from a local Git repository, substitute the `thehyve/vcf2maf` image name by `vcf2maf` in the subsequent commands, as well as in `docker_vep_cache.sh`.
+
+## Create local VEP cache directory
+First create a directory for the VEP cache folder.
+```bash
+mkdir /<local_path>/<vep_cache_folder>
+```
+
+Add this path as environment variable to `~/.bash_profile` or `~/.bashrc`.
+```bash
+export VEP_CACHE=/<local_path>/<vep_cache_folder>/
+```
+Load this variable with `source ~/.bash_profile` or `source ~/.bashrc`.
+
+Creating the cache directory includes downloading the Ensembl release, reference genome and ExAC VCF. **This will take several hours.**
+```bash
+/bin/bash docker_vep_cache.sh
+```
+
+## Test VEP, vcf2maf and maf2maf
+Tests can be found in the [Tests markdown file](docs/docker_tests.md).
+
+## Run vcf2maf
+To run `vcf2maf` with a local VCF file, use the [test example](docs/docker_tests.md#test-vcf2maf) and mount a directory for input and output using the `-v` command in `docker run`. For example: `-v /local_input_output/:/input_output/`. In the `vcf2maf.pl` command, direct to the input and output files, for example: `--input-vcf /input_output/input.vcf` and `--output-maf /input_output/output.maf`.
+
+Depending on your machine, the default VEP buffer size (5000 variants) might be too large. This can cause the error `ERROR: Forked process(es) died`. Add `--buffer-size 500` to the `vcf2maf` run command to reduce the VEP buffer size.
+
+# Quick start (manual installation)
 
 Find the [latest stable release](https://github.com/mskcc/vcf2maf/releases), download it, and view the detailed usage manuals for `vcf2maf` and `maf2maf`:
 
@@ -29,8 +86,7 @@ If you have the VEP script in a different folder like `/opt/vep`, and its cache 
 
     perl vcf2maf.pl --input-vcf tests/test.vcf --output-maf tests/test.vep.maf --vep-path /opt/vep --vep-data /srv/vep
 
-maf2maf
--------
+# maf2maf
 
 If you have a MAF or a MAF-like file that you want to reannotate, then use `maf2maf`, which simply runs `maf2vcf` followed by `vcf2maf`:
 
@@ -45,7 +101,6 @@ After tests on variant lists from many sources, `maf2vcf` and `maf2maf` are quit
 
 See `data/minimalist_test_maf.tsv` for a sampler. Addition of `Tumor_Seq_Allele1` will be used to determine zygosity. Otherwise, it will try to determine zygosity from variant allele fractions, assuming that arguments `--tum-vad-col` and `--tum-depth-col` are set correctly to the names of columns containing those read counts. Specifying the `Matched_Norm_Sample_Barcode` with its respective columns containing read-counts, is also strongly recommended. Columns containing normal allele read counts can be specified using argument `--nrm-vad-col` and `--nrm-depth-col`.
 
-License
--------
+# License
 
     Apache-2.0 | Apache License, Version 2.0 | https://www.apache.org/licenses/LICENSE-2.0
